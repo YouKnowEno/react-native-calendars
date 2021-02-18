@@ -14,7 +14,6 @@ const commons = require('./commons');
 const UPDATE_SOURCES = commons.UPDATE_SOURCES;
 const iconDown = require('../img/down.png');
 const iconUp = require('../img/up.png');
-const TOP_POSITION = 65;
 
 /**
  * @description: Calendar context provider component
@@ -47,10 +46,9 @@ class CalendarProvider extends Component {
     this.state = {
       date: this.props.date || XDate().toString('yyyy-MM-dd'),
       updateSource: UPDATE_SOURCES.CALENDAR_INIT,
-      buttonY: new Animated.Value(-props.todayBottomMargin || -TOP_POSITION),
-      buttonIcon: this.getButtonIcon(props.date),
       disabled: false,
-      opacity: new Animated.Value(1)
+      opacity: new Animated.Value(0),
+      backgroundColor: new Animated.Value(0)
     };
   }
 
@@ -72,8 +70,10 @@ class CalendarProvider extends Component {
   setDate = (date, updateSource) => {
     const sameMonth = dateutils.sameMonth(XDate(date), XDate(this.state.date));
 
-    this.setState({date, updateSource, buttonIcon: this.getButtonIcon(date)}, () => {
-      this.animateTodayButton(date);
+    this.setState({date, updateSource}, () => {
+      // this.animateTodayButton(date);
+      this.animateOpacity(date);
+      this.animateBackgroundColor(date);
     });
 
     _.invoke(this.props, 'onDateChanged', date, updateSource);
@@ -86,16 +86,8 @@ class CalendarProvider extends Component {
   setDisabled = (disabled) => {
     if (this.props.showTodayButton && disabled !== this.state.disabled) {
       this.setState({disabled});
-      this.animateOpacity(disabled);
+      // this.animateOpacity(disabled);
     }
-  }
-
-  getButtonIcon(date) {
-    if (!this.props.showTodayButton) {
-      return;
-    }
-    const isPastDate = this.isPastDate(date);
-    return isPastDate ? iconDown : iconUp;
   }
 
   isPastDate(date) {
@@ -118,26 +110,27 @@ class CalendarProvider extends Component {
     return false;
   }
 
-  animateTodayButton(date) {
+  animateOpacity(date) {
     if (this.props.showTodayButton) {
       const today = XDate().toString('yyyy-MM-dd');
       const isToday = today === date;
 
-      Animated.spring(this.state.buttonY, {
-        toValue: isToday ? TOP_POSITION : -this.props.todayBottomMargin || -TOP_POSITION,
-        tension: 30,
-        friction: 8,
+      Animated.timing(this.state.opacity, {
+        toValue: isToday ? 0 : 1,
+        duration: 250,
         useNativeDriver: true
       }).start();
     }
   }
 
-  animateOpacity(disabled) {
-    const {disabledOpacity} = this.props;
-    if (disabledOpacity) {
-      Animated.timing(this.state.opacity, {
-        toValue: disabled ? disabledOpacity : 1,
-        duration: 500,
+  animateBackgroundColor(date) {
+    if (this.props.showTodayButton) {
+      const today = XDate().toString('yyyy-MM-dd');
+      const isToday = today === date;
+
+      Animated.timing(this.state.backgroundColor, {
+        toValue: isToday ? 0 : 1,
+        duration: 250,
         useNativeDriver: true
       }).start();
     }
@@ -149,15 +142,14 @@ class CalendarProvider extends Component {
   }
 
   renderTodayButton() {
-    const {disabled, opacity, buttonY, buttonIcon} = this.state;
-    const todayString = XDate.locales[XDate.defaultLocale].today || commons.todayString;
-    const today = todayString.charAt(0).toUpperCase() + todayString.slice(1);
+    const {disabled, opacity } = this.state;
 
     return (
-      <Animated.View style={[this.style.todayButtonContainer, {transform: [{translateY: buttonY}]}]}>
-        <TouchableOpacity style={[this.style.todayButton, this.props.todayButtonStyle]} onPress={this.onTodayPress} disabled={disabled}>
-          <Animated.Image style={[this.style.todayButtonImage, {opacity}]} source={buttonIcon}/>
-          <Animated.Text allowFontScaling={false} style={[this.style.todayButtonText, {opacity}]}>{today}</Animated.Text>
+      <Animated.View style={[this.style.todayButtonContainer, {opacity} ]}>
+        <TouchableOpacity style={[this.style.todayButton, this.props.todayButtonStyle], {backgroundColor: '#DDDCD9',  borderRadius: 14,    height: 28,
+          paddingHorizontal: 10,       justifyContent: 'center',
+          alignItems: 'center',}} onPress={this.onTodayPress} >
+          <Animated.Text allowFontScaling={false} style={[this.style.todayButtonText]}>TODAY</Animated.Text>
         </TouchableOpacity>
       </Animated.View>
     );
