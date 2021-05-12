@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React, {Component} from 'react';
-import {Animated, TouchableOpacity, View} from 'react-native';
+import {Animated, TouchableOpacity, View, Platform, Dimensions} from 'react-native';
+import {initialWindowMetrics} from 'react-native-safe-area-context';
 import PropTypes from 'prop-types';
 import XDate from 'xdate';
 
@@ -9,11 +10,10 @@ import {xdateToData} from '../interface';
 import styleConstructor from './style';
 import CalendarContext from './calendarContext';
 
-
 const commons = require('./commons');
 const UPDATE_SOURCES = commons.UPDATE_SOURCES;
-const iconDown = require('../img/down.png');
-const iconUp = require('../img/up.png');
+// const iconDown = require('../img/down.png');
+// const iconUp = require('../img/up.png');
 
 /**
  * @description: Calendar context provider component
@@ -37,7 +37,7 @@ class CalendarProvider extends Component {
     todayButtonStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.number, PropTypes.array]),
     /** The opacity for the disabled today button (0-1) */
     disabledOpacity: PropTypes.number
-  }
+  };
 
   constructor(props) {
     super(props);
@@ -81,14 +81,14 @@ class CalendarProvider extends Component {
     if (!sameMonth) {
       _.invoke(this.props, 'onMonthChange', xdateToData(XDate(date)), updateSource);
     }
-  }
+  };
 
-  setDisabled = (disabled) => {
+  setDisabled = disabled => {
     if (this.props.showTodayButton && disabled !== this.state.disabled) {
       this.setState({disabled});
       // this.animateOpacity(disabled);
     }
-  }
+  };
 
   isPastDate(date) {
     const today = XDate();
@@ -139,17 +139,33 @@ class CalendarProvider extends Component {
   onTodayPress = () => {
     const today = XDate().toString('yyyy-MM-dd');
     this.setDate(today, UPDATE_SOURCES.TODAY_PRESS);
-  }
+  };
 
   renderTodayButton() {
-    const {disabled, opacity } = this.state;
-
+    const {opacity} = this.state;
+    const top = Platform.select({
+      android: '2.5%',
+      ios: initialWindowMetrics.insets.top + Dimensions.get('window').height * 0.025
+    });
     return (
-      <Animated.View style={[this.style.todayButtonContainer, {opacity} ]}>
-        <TouchableOpacity style={[this.style.todayButton, this.props.todayButtonStyle], {backgroundColor: '#DDDCD9',  borderRadius: 14,    height: 28,
-          paddingHorizontal: 10,       justifyContent: 'center',
-          alignItems: 'center',}} onPress={this.onTodayPress} >
-          <Animated.Text allowFontScaling={false} style={[this.style.todayButtonText]}>TODAY</Animated.Text>
+      <Animated.View style={[this.style.todayButtonContainer, {opacity, top}]}>
+        <TouchableOpacity
+          style={
+            ([this.style.todayButton, this.props.todayButtonStyle],
+            {
+              backgroundColor: '#DDDCD9',
+              borderRadius: 14,
+              height: 28,
+              paddingHorizontal: 10,
+              justifyContent: 'center',
+              alignItems: 'center'
+            })
+          }
+          onPress={this.onTodayPress}
+        >
+          <Animated.Text allowFontScaling={false} style={[this.style.todayButtonText]}>
+            TODAY
+          </Animated.Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -158,9 +174,7 @@ class CalendarProvider extends Component {
   render() {
     return (
       <CalendarContext.Provider value={this.getProviderContextValue()}>
-        <View style={[{flex: 1}, this.props.style]}>
-          {this.props.children}
-        </View>
+        <View style={[{flex: 1}, this.props.style]}>{this.props.children}</View>
         {this.props.showTodayButton && this.renderTodayButton()}
       </CalendarContext.Provider>
     );
