@@ -145,7 +145,7 @@ class CalendarProvider extends Component {
     const {opacity} = this.state;
     const top = Platform.select({
       android: '2.5%',
-      ios: initialWindowMetrics.insets.top + Dimensions.get('window').height * 0.025
+      ios: initialWindowMetrics.insets.top + Dimensions.get('window').height * 0.02
     });
     return (
       <Animated.View style={[this.style.todayButtonContainer, {opacity, top}]}>
